@@ -9,7 +9,13 @@ def main():
     #
     server_socket = socket.create_server(("localhost", 6379), reuse_port=True)
     connection, _ = server_socket.accept()
-    connection.sendall(b"+PONG\r\n")
+
+    while True:
+        buffer: bytes = connection.recv(1024)
+        data: str = buffer.decode()
+        print("Received message from client", data)
+        connection.send("+PONG\r\n".encode())
+        print("Sent to client: pong")
 
 
 if __name__ == "__main__":
