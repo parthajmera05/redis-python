@@ -8,27 +8,43 @@ def handle_command(client : socket.socket):
         while True:
             
             
-            data = client.recv(BUFFER_SIZE)
+            chunk = client.recv(BUFFER_SIZE)
 
-            if not data: 
+            if not chunk: 
                 break
-            print(f"Received data: {data}")
-            if data.startswith(b"*1\r\n$4\r\nPING\r\n"):
+           
+            
+            data = chunk.split(b"\r\n")
+            
+            command = data[2].decode()
+            print(f"Received command: {command}")
+            if command == "PING":
                 client.sendall(b"+PONG\r\n")
-            if data.startswith(b"*2\r\n$4\r\nECHO\r\n"):
-                msg = data.split(b"\r\n")[-2]
+            elif command == "ECHO":
+                msg = data[-2]
                 client.sendall(b"$" + str(len(msg)).encode() + b"\r\n" + msg + b"\r\n")
-            if data.startswith(b"*3\r\n$3\r\nSET\r\n"):
-                key = data.split(b"\r\n")[-4].decode()
-                value = data.split(b"\r\n")[-2].decode()
+            elif command == "SET":
+                key = data[4].decode()
+                value = data[6].decode()
+
+                if len(data) > 8 and data[8].decode() == "PX":
+                    ttl = int(data[10].decode())
+                    threading.Timer(ttl / 1000, my_dict.pop, args=[key]).start()
                 my_dict[key] = value
                 client.sendall(b"+OK\r\n")
-            if data.startswith(b"*2\r\n$3\r\nGET\r\n"):
-                key = data.split(b"\r\n")[-2].decode()
-                print(my_dict)
-                value = my_dict[key]
-                value = value.encode()
-                client.sendall(b"$" + str(len(value)).encode() + b"\r\n" + value + b"\r\n")
+            elif command == "GET":
+                key = data[4].decode()
+                value = my_dict.get(key, None)
+                print(f"Inside Get Command:", {value})
+                if value is not None:
+                    value = value.encode()
+                    client.sendall(b"$" + str(len(value)).encode() + b"\r\n" + value + b"\r\n")
+                elif value is None :
+                    client.sendall(b"$-1\r\n")
+            else :
+                client.sendall(b"-ERR unknown command\r\n")
+            
+                
 
 
             
