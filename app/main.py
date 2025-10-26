@@ -2,10 +2,11 @@ import socket  # noqa: F401
 import threading
 
 BUFFER_SIZE = 4096
+my_dict = {}
 def handle_command(client : socket.socket):
     with client:
         while True:
-        
+            
             
             data = client.recv(BUFFER_SIZE)
 
@@ -17,6 +18,20 @@ def handle_command(client : socket.socket):
             if data.startswith(b"*2\r\n$4\r\nECHO\r\n"):
                 msg = data.split(b"\r\n")[-2]
                 client.sendall(b"$" + str(len(msg)).encode() + b"\r\n" + msg + b"\r\n")
+            if data.startswith(b"*3\r\n$3\r\nSET\r\n"):
+                key = data.split(b"\r\n")[-4].decode()
+                value = data.split(b"\r\n")[-2].decode()
+                my_dict[key] = value
+                client.sendall(b"+OK\r\n")
+            if data.startswith(b"*2\r\n$3\r\nGET\r\n"):
+                key = data.split(b"\r\n")[-2].decode()
+                print(my_dict)
+                value = my_dict[key]
+                value = value.encode()
+                client.sendall(b"$" + str(len(value)).encode() + b"\r\n" + value + b"\r\n")
+
+
+            
             
 
             
