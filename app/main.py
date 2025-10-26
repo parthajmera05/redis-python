@@ -3,6 +3,7 @@ import threading
 
 BUFFER_SIZE = 4096
 my_dict = {}
+
 def handle_command(client : socket.socket):
     with client:
         while True:
@@ -15,9 +16,9 @@ def handle_command(client : socket.socket):
            
             
             data = chunk.split(b"\r\n")
-            
+            print(f"Received data: {data}")
             command = data[2].decode()
-            print(f"Received command: {command}")
+            
             if command == "PING":
                 client.sendall(b"+PONG\r\n")
             elif command == "ECHO":
@@ -41,6 +42,17 @@ def handle_command(client : socket.socket):
                     client.sendall(b"$" + str(len(value)).encode() + b"\r\n" + value + b"\r\n")
                 elif value is None :
                     client.sendall(b"$-1\r\n")
+            elif command == "RPUSH":
+                print(f"Inside RPUSH")
+                key = data[4].decode()
+                value = data[6].decode()
+                if key in my_dict.keys():
+                    my_dict[key].append(value)
+                else:
+                    my_dict[key] = [value]
+                s = len(my_dict[key])
+                client.sendall(b":" + str(s).encode() + b"\r\n")
+
             else :
                 client.sendall(b"-ERR unknown command\r\n")
             
