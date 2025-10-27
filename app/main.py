@@ -45,11 +45,16 @@ def handle_command(client : socket.socket):
             elif command == "RPUSH":
                 print(f"Inside RPUSH")
                 key = data[4].decode()
-                value = data[6].decode()
-                if key in my_dict.keys():
-                    my_dict[key].append(value)
-                else:
-                    my_dict[key] = [value]
+                a = len(data)
+                b = 6
+                while b < a:
+
+                    value = data[b].decode()
+                    if key in my_dict.keys():
+                        my_dict[key].append(value)
+                    else:
+                        my_dict[key] = [value]
+                    b = b + 2
                 s = len(my_dict[key])
                 client.sendall(b":" + str(s).encode() + b"\r\n")
 
