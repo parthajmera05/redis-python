@@ -57,7 +57,25 @@ def handle_command(client : socket.socket):
                     b = b + 2
                 s = len(my_dict[key])
                 client.sendall(b":" + str(s).encode() + b"\r\n")
-
+            elif command == "LRANGE":
+                key = data[4].decode()
+                print(f"Inside LRANGE")
+                start = int(data[6].decode())
+                end = int(data[8].decode())
+                if key not in my_dict or start >= len(my_dict[key]) or start > end:
+                    client.sendall(b"*0\r\n")
+                    continue
+                lst = my_dict[key]
+                if end == -1:
+                    end = len(lst) - 1
+                else:
+                    end = min(end, len(lst) - 1)
+                return_list = lst[start : end + 1]
+                s = len(return_list)
+                client.sendall(b"*" + str(s).encode() + b"\r\n")
+                
+                for item in return_list:
+                    client.sendall(b"$" + str(len(item)).encode() + b"\r\n" + item.encode() + b"\r\n")
             else :
                 client.sendall(b"-ERR unknown command\r\n")
             
